@@ -25,14 +25,12 @@ function Container() {
           const { data: response } = await axios.get(
             `${VITE_API_BASE_URL}/expense/timestamp?month=${Number(month) - 1}&year=${year}`,
           );
-          console.log(response);
           if (!response.success) {
             toast.error(response.message);
           } else {
             setData(aggregateExpenses(response.data));
           }
         } catch (error) {
-          console.log(error);
           if (error?.response?.data?.message)
             toast.error(error?.response?.data?.message);
           else toast.error("Something went wrong!");

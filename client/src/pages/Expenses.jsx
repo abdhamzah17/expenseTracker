@@ -59,14 +59,12 @@ function Expenses() {
         `${VITE_API_BASE_URL}/expense/add`,
         expense,
       );
-      console.log(response);
       if (!response.success) {
         toast.error(response.message);
       } else {
         toast.success(response.message);
       }
     } catch (error) {
-      console.log(error);
       if (error?.response?.data?.message)
         toast.error(error?.response?.data?.message);
       else toast.error("Something went wrong!");
@@ -83,14 +81,12 @@ function Expenses() {
         `${VITE_API_BASE_URL}/expense/edit/${selectedExpense.expenseid}`,
         expense,
       );
-      console.log(response);
       if (!response.success) {
         toast.error(response.message);
       } else {
         toast.success(response.message);
       }
     } catch (error) {
-      console.log(error);
       if (error?.response?.data?.message)
         toast.error(error?.response?.data?.message);
       else toast.error("Something went wrong!");
@@ -108,14 +104,12 @@ function Expenses() {
         const { data: response } = await axios.delete(
           `${VITE_API_BASE_URL}/expense/delete/${selectedExpense.expenseid}`,
         );
-        console.log(response);
         if (!response.success) {
           toast.error(response.message);
         } else {
           toast.success(response.message);
         }
       } catch (error) {
-        console.log(error);
         if (error?.response?.data?.message)
           toast.error(error?.response?.data?.message);
         else toast.error("Something went wrong!");
@@ -134,14 +128,12 @@ function Expenses() {
         const { data: response } = await axios.get(
           `${VITE_API_BASE_URL}/expense`,
         );
-        console.log(response);
         if (!response.success) {
           toast.error(response.message);
         } else {
           setExpenses(response.data);
         }
       } catch (error) {
-        console.log(error);
         if (error?.response?.data?.message)
           toast.error(error?.response?.data?.message);
         else toast.error("Something went wrong!");
@@ -155,14 +147,12 @@ function Expenses() {
         const { data: response } = await axios.get(
           `${VITE_API_BASE_URL}/expense/${category}`,
         );
-        console.log(response);
         if (!response.success) {
           toast.error(response.message);
         } else {
           setExpenses(response.data);
         }
       } catch (error) {
-        console.log(error);
         if (error?.response?.data?.message)
           toast.error(error?.response?.data?.message);
         else toast.error("Something went wrong!");
@@ -177,14 +167,12 @@ function Expenses() {
         const { data: response } = await axios.get(
           `${VITE_API_BASE_URL}/expense/timestamp?month=${parseInt(month) - 1}&year=${year}`,
         );
-        console.log(response);
         if (!response.success) {
           toast.error(response.message);
         } else {
           setExpenses(response.data);
         }
       } catch (error) {
-        console.log(error);
         if (error?.response?.data?.message)
           toast.error(error?.response?.data?.message);
         else toast.error("Something went wrong!");
@@ -229,7 +217,6 @@ function Expenses() {
             (a, b) => parseFloat(a.expenseamount) - parseFloat(b.expenseamount),
           );
         default:
-          console.log("Some problem occurred");
           return expenses;
       }
     };
