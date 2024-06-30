@@ -4,6 +4,7 @@ import { errorHandler } from "../utils/error.js";
 export async function getExpenses(req, res, next) {
   try {
     const response = await db.query("SELECT * FROM Expenses");
+    console.log(response.rows);
     res.status(200).json({ data: response.rows, success: true });
   } catch (error) {
     next(error);

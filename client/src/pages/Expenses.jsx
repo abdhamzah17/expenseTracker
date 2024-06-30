@@ -5,6 +5,7 @@ import ExpenseList from "../components/ExpenseList";
 import MenuBar from "../components/MenuBar";
 import ExpenseForm from "../components/ExpenseForm";
 import Header from "../components/Header";
+import DialogBox from "../components/DialogBox";
 
 const { VITE_API_BASE_URL } = import.meta.env;
 function Expenses() {
@@ -12,18 +13,48 @@ function Expenses() {
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState("recent");
   const [query, setQuery] = useState("");
+  const [timeStamp, setTimeStamp] = useState("");
   const [category, setCategory] = useState("all");
+  const [lastChanged, setLastChanged] = useState("");
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const searchedExpenses =
-    query.length > 2
-      ? expenses.filter((expense) =>
-          expense.expensename.toLowerCase().includes(query.toLowerCase()),
-        )
-      : expenses;
+  const [isEditing, setIsEditing] = useState(false);
+  const [dialog, setDialog] = useState({
+    message: "",
+    isVisible: false,
+  });
+
+  const searchedExpenses = expenses.filter((expense) =>
+    expense.expensename.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  function handleEditClick(id) {
+    setSelectedExpense(() => {
+      const chosen = expenses.find((expense) => expense.expenseid === id);
+      return chosen;
+    });
+    setIsEditing(true);
+  }
+
+  function handleCancel() {
+    setSelectedExpense(null);
+    setIsEditing(false);
+  }
+  function handleDeleteClick(id) {
+    setSelectedExpense(() => {
+      const chosen = expenses.find((expense) => expense.expenseid === id);
+      return chosen;
+    });
+    setDialog((dialog) => ({
+      ...dialog,
+      message: "Are you sure you want to delete this expense?",
+      isVisible: true,
+    }));
+  }
 
   async function handleAdd(expense) {
     try {
       setIsLoading(true);
+      setSelectedExpense(expense);
       const { data: response } = await axios.post(
         `${VITE_API_BASE_URL}/expense/add`,
         expense,
@@ -41,7 +72,59 @@ function Expenses() {
       else toast.error("Something went wrong!");
     } finally {
       setIsLoading(false);
+      setSelectedExpense(null);
     }
+  }
+
+  async function handleEdit(expense) {
+    try {
+      setIsLoading(true);
+      const { data: response } = await axios.put(
+        `${VITE_API_BASE_URL}/expense/edit/${selectedExpense.expenseid}`,
+        expense,
+      );
+      console.log(response);
+      if (!response.success) {
+        toast.error(response.message);
+      } else {
+        toast.success(response.message);
+      }
+    } catch (error) {
+      console.log(error);
+      if (error?.response?.data?.message)
+        toast.error(error?.response?.data?.message);
+      else toast.error("Something went wrong!");
+    } finally {
+      setIsLoading(false);
+    }
+    setSelectedExpense(null);
+    setIsEditing(null);
+  }
+
+  async function handleDelete(res) {
+    if (res) {
+      try {
+        setIsLoading(true);
+        const { data: response } = await axios.delete(
+          `${VITE_API_BASE_URL}/expense/delete/${selectedExpense.expenseid}`,
+        );
+        console.log(response);
+        if (!response.success) {
+          toast.error(response.message);
+        } else {
+          toast.success(response.message);
+        }
+      } catch (error) {
+        console.log(error);
+        if (error?.response?.data?.message)
+          toast.error(error?.response?.data?.message);
+        else toast.error("Something went wrong!");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    setSelectedExpense(null);
+    setDialog((dialog) => ({ ...dialog, message: "", isVisible: false }));
   }
 
   useEffect(() => {
@@ -55,7 +138,7 @@ function Expenses() {
         if (!response.success) {
           toast.error(response.message);
         } else {
-          setExpenses(response.data.slice(0, 10));
+          setExpenses(response.data);
         }
       } catch (error) {
         console.log(error);
@@ -66,90 +149,128 @@ function Expenses() {
         setIsLoading(false);
       }
     }
-    if (selectedExpense == null && category == "all") getExpenses();
-  }, [selectedExpense, category]);
-
-  useEffect(
-    function () {
-      async function getExpenses() {
-        try {
-          setIsLoading(true);
-          const { data: response } = await axios.get(
-            `${VITE_API_BASE_URL}/expense/${category}`,
-          );
-          console.log(response);
-          if (!response.success) {
-            toast.error(response.message);
-          } else {
-            setExpenses(response.data.slice(0, 10));
-          }
-        } catch (error) {
-          console.log(error);
-          if (error?.response?.data?.message)
-            toast.error(error?.response?.data?.message);
-          else toast.error("Something went wrong!");
-        } finally {
-          setIsLoading(false);
+    async function getExpensesByCategory() {
+      try {
+        setIsLoading(true);
+        const { data: response } = await axios.get(
+          `${VITE_API_BASE_URL}/expense/${category}`,
+        );
+        console.log(response);
+        if (!response.success) {
+          toast.error(response.message);
+        } else {
+          setExpenses(response.data);
         }
+      } catch (error) {
+        console.log(error);
+        if (error?.response?.data?.message)
+          toast.error(error?.response?.data?.message);
+        else toast.error("Something went wrong!");
+      } finally {
+        setIsLoading(false);
       }
-      if (category != "all") getExpenses();
-    },
-    [category],
-  );
+    }
+    async function getExpensesByTimeStamp() {
+      const [year, month] = timeStamp.split("-");
+      try {
+        setIsLoading(true);
+        const { data: response } = await axios.get(
+          `${VITE_API_BASE_URL}/expense/timestamp?month=${parseInt(month) - 1}&year=${year}`,
+        );
+        console.log(response);
+        if (!response.success) {
+          toast.error(response.message);
+        } else {
+          setExpenses(response.data);
+        }
+      } catch (error) {
+        console.log(error);
+        if (error?.response?.data?.message)
+          toast.error(error?.response?.data?.message);
+        else toast.error("Something went wrong!");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (selectedExpense == null) {
+      if (category == "all" && timeStamp == "") {
+        getExpenses();
+      } else if (lastChanged == "category" && category != "all") {
+        getExpensesByCategory();
+      } else if (lastChanged == "timeStamp" && timeStamp != "") {
+        getExpensesByTimeStamp();
+      } else {
+        getExpenses();
+      }
+    }
+  }, [selectedExpense, category, timeStamp, lastChanged]);
 
-  useEffect(
-    function () {
+  useEffect(() => {
+    setIsLoading(true);
+
+    const sortExpenses = (expenses) => {
+      const sortedExpenses = [...expenses];
+
       switch (sortBy) {
-        case "recent":
-          setExpenses((exp) =>
-            exp.sort(
-              (a, b) => new Date(b.expensedate) - new Date(a.expensedate),
-            ),
-          );
-          break;
         case "oldest":
-          setExpenses((exp) =>
-            exp.sort(
-              (a, b) => new Date(a.expensedate) - new Date(b.expensedate),
-            ),
+          return sortedExpenses.sort(
+            (a, b) => new Date(a.expensedate) - new Date(b.expensedate),
           );
-          break;
-        case "lowest":
-          setExpenses((exp) =>
-            exp.sort(
-              (a, b) =>
-                parseFloat(a.expenseamount) - parseFloat(b.expenseamount),
-            ),
+        case "recent":
+          return sortedExpenses.sort(
+            (a, b) => new Date(b.expensedate) - new Date(a.expensedate),
           );
-          break;
         case "highest":
-          setExpenses((exp) =>
-            exp.sort(
-              (a, b) =>
-                parseFloat(b.expenseamount) - parseFloat(a.expenseamount),
-            ),
+          return sortedExpenses.sort(
+            (a, b) => parseFloat(b.expenseamount) - parseFloat(a.expenseamount),
           );
-          break;
+        case "lowest":
+          return sortedExpenses.sort(
+            (a, b) => parseFloat(a.expenseamount) - parseFloat(b.expenseamount),
+          );
         default:
-          console.log("Some problem occured");
+          console.log("Some problem occurred");
+          return expenses;
       }
-    },
-    [sortBy],
-  );
+    };
+
+    setExpenses((exp) => sortExpenses(exp));
+    setIsLoading(false);
+  }, [sortBy]);
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-around">
+    <main className="flex min-h-screen w-full flex-col items-center gap-2">
       <Header />
-      <MenuBar
-        query={query}
-        setQuery={setQuery}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        category={category}
-        setCategory={setCategory}
-      />
-      <ExpenseForm handleAdd={handleAdd} />
-      <ExpenseList expenses={searchedExpenses} isLoading={isLoading} />
+      <div className="flex min-h-[calc(100vh-60px)] w-full flex-col items-center justify-evenly gap-2">
+        <MenuBar
+          query={query}
+          setQuery={setQuery}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          category={category}
+          setCategory={setCategory}
+          timeStamp={timeStamp}
+          setTimeStamp={setTimeStamp}
+          lastChanged={lastChanged}
+          setLastChanged={setLastChanged}
+        />
+        <ExpenseForm
+          handleAdd={handleAdd}
+          isEditing={isEditing}
+          handleCancel={handleCancel}
+          handleEdit={handleEdit}
+          selectedExpense={selectedExpense}
+        />
+        <ExpenseList
+          expenses={searchedExpenses}
+          isLoading={isLoading}
+          handleDeleteClick={handleDeleteClick}
+          handleEditClick={handleEditClick}
+        />
+      </div>
+      {dialog.isVisible && (
+        <DialogBox message={dialog.message} onDialog={handleDelete} />
+      )}
     </main>
   );
 }
