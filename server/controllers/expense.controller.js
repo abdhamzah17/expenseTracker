@@ -3,7 +3,9 @@ import crypto from "crypto";
 import { errorHandler } from "../utils/error.js";
 export async function getExpenses(req, res, next) {
   try {
-    const response = await db.query("SELECT * FROM Expenses");
+    const response = await db.query(
+      "SELECT * FROM Expenses ORDER BY expensedate DESC"
+    );
     res.status(200).json({ data: response.rows, success: true });
   } catch (error) {
     next(error);
@@ -95,7 +97,7 @@ export async function getExpensesByCategory(req, res, next) {
   const expenseCategory = req.params.category;
   try {
     const response = await db.query(
-      "SELECT * FROM Expenses WHERE expenseCategory = $1",
+      "SELECT * FROM Expenses WHERE expenseCategory = $1 ORDER BY expensedate DESC",
       [expenseCategory]
     );
     res.status(200).json({ data: response.rows, success: true });
@@ -107,7 +109,9 @@ export async function getExpensesByCategory(req, res, next) {
 export async function getExpensesByTimeStamp(req, res, next) {
   const { month, year } = req.query;
   try {
-    const response = await db.query("SELECT * FROM Expenses");
+    const response = await db.query(
+      "SELECT * FROM Expenses ORDER BY expensedate desc"
+    );
 
     const reqData = response.rows.filter((expense) => {
       const expenseDate = new Date(expense.expensedate);
