@@ -6,11 +6,8 @@ function Expense({ expense }) {
   return (
     <div className="flex w-full items-center justify-between gap-2 rounded-md border-l-4 border-blue-500 px-4 py-2 shadow-md">
       <div className="space-y-1">
-        <h3 className="text-[1rem] font-semibold">{expense.expensename}</h3>
-        {/* <p className="w-min rounded-2xl bg-blue-500 px-2 py-1 text-xs font-semibold text-white">
-          {expense.expensecategory}
-        </p> */}
-        <p className="text-xs">
+        <h3 className="text-base font-semibold">{expense.expensename}</h3>
+        <p className="text-left text-xs">
           {new Date(expense.expensedate).toLocaleDateString("en-GB")}
         </p>
       </div>
